@@ -72,9 +72,6 @@ class Highlighter:
         self.lineHighlights = []
         self.pointHighlights = []
 
-    def debug(self,  msg):
-        QgsMessageLog.logMessage(msg)
-
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
