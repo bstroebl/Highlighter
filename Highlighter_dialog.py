@@ -25,6 +25,7 @@ import os
 
 from PyQt4 import QtGui, QtCore, uic
 from qgis.gui import QgsColorDialogV2
+from qgis.core import QgsMessageLog
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'Highlightdialog_base.ui'))
@@ -43,8 +44,18 @@ class HighlighterDialog(QtGui.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.pointLayerId = pointLayerId
         self.lineLayerId = lineLayerId
-        self.pointColor = pointColor
-        self.lineColor = lineColor
+        self.defaultColor = QtCore.Qt.yellow
+
+        if pointColor == None:
+            self.pointColor =  self.defaultColor
+        else:
+            self.pointColor = pointColor
+
+        if lineColor == None:
+            self.lineColor =  self.defaultColor
+        else:
+            self.lineColor = lineColor
+
         self.initialize(pointLayers, lineLayers)
 
     def initialize(self, pointLayers, lineLayers):
@@ -70,19 +81,24 @@ class HighlighterDialog(QtGui.QDialog, FORM_CLASS):
         for key, value in thisDict.iteritems():
             cbx.addItem( value, key )
 
+    def chooseColor(self, color):
+        clrDlg = QgsColorDialogV2(None,  color = color)
+        clrDlg.setAllowAlpha(True)
+        clrDlg.show()
+        result = clrDlg.exec_()
+
+        if result == 1:
+            color = clrDlg.color()
+
+        return color
+
     @QtCore.pyqtSlot(   )
     def on_btnPointColor_clicked(self, checked = False):
-        if self.pointColor == None:
-            self.pointColor = QtCore.Qt.yellow
-
-        self.pointColor = QgsColorDialogV2.getColor(self.pointColor, None, allowAlpha = True)
+        self.pointColor = self.chooseColor(self.pointColor)
 
     @QtCore.pyqtSlot(   )
     def on_btnLineColor_clicked(self, checked = False):
-        if self.lineColor == None:
-            self.lineColor = QtCore.Qt.yellow
-
-        self.lineColor = QgsColorDialogV2.getColor(self.lineColor, None, allowAlpha = True)
+        self.lineColor = self.chooseColor(self.lineColor)
 
     def accept(self):
         self.pointLayerId = self.cbxPointLayer.itemData(self.cbxPointLayer.currentIndex())

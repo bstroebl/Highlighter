@@ -209,7 +209,7 @@ class Highlighter:
         """Run method that performs all the real work"""
         pointLayers = self.getVectorLayersByType(0)
 
-        if len(pointLayers) >= 0:
+        if len(pointLayers) >= 0: # wait for result
             lineLayers = self.getVectorLayersByType(1)
 
             if self.pointLayer != None:
