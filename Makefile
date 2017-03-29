@@ -26,12 +26,12 @@
 #Add iso code for any locales you want to support here (space separated)
 # default is no locales
 # LOCALES = af
-LOCALES =
+LOCALES = Highlighter_de
 
 # If locales are enabled, set the name of the lrelease binary on your system. If
 # you have trouble compiling the translations, you may have to specify the full path to
 # lrelease
-#LRELEASE = lrelease
+LRELEASE = lrelease
 #LRELEASE = lrelease-qt4
 
 
@@ -48,11 +48,11 @@ PY_FILES = \
 
 UI_FILES = Highlightdialog_base.ui
 
-EXTRAS = metadata.txt icon.png
+EXTRAS = metadata.txt 
 
 EXTRA_DIRS =
 
-COMPILED_RESOURCE_FILES = resources.py
+#COMPILED_RESOURCE_FILES = resources.py
 
 PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
 
@@ -65,17 +65,18 @@ HELP = help/build/html
 
 PLUGIN_UPLOAD = $(c)/plugin_upload.py
 
-RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
+#RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
 
 QGISDIR=.qgis2
 
 default: compile
 
-compile: $(COMPILED_RESOURCE_FILES)
+compile: 
+#$(COMPILED_RESOURCE_FILES)
 
-%.py : %.qrc $(RESOURCES_SRC)
-	pyrcc4 -o $*.py  $<
-
+#%.py : %.qrc $(RESOURCES_SRC)
+#	pyrcc4 -o $*.py  $<
+	
 %.qm : %.ts
 	$(LRELEASE) $<
 
@@ -97,7 +98,7 @@ test: compile transcompile
 	@echo "e.g. source run-env-linux.sh <path to qgis install>; make test"
 	@echo "----------------------"
 
-deploy: compile doc transcompile
+deploy: compile transcompile
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
@@ -108,10 +109,10 @@ deploy: compile doc transcompile
 	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(PY_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(UI_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(COMPILED_RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	#cp -vf $(COMPILED_RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
+	#cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
 	# Copy extra directories if any
   # (temporarily removed)
 

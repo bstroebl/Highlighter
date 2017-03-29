@@ -59,15 +59,21 @@ class Highlighter:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
-
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&Highlighter')
         # TODO: We are going to let the user set this up in a future iteration
         #self.toolbar = self.iface.addToolBar(u'Highlighter')
         #self.toolbar.setObjectName(u'Highlighter')
-        self.pointHighlightLayer = None
-        self.lineHighlightLayer = None
+        self.pointLayer = None
+        self.lineLayer = None
+        self.pointHighlightColor = None
+        self.lineHighlightColor = None
+        self.lineHighlights = []
+        self.pointHighlights = []
+
+    def debug(self,  msg):
+        QgsMessageLog.logMessage(msg)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -176,67 +182,22 @@ class Highlighter:
                 self.tr(u'&Highlighter'),
                 action)
 
-    def initLayers(self):
-        return True
-        settings = QSettings()
-        crs = settings.value( "/Projections/projectDefaultCrs", "EPSG:4326", type=str )
-        crsString = "?crs=" + crs
+        self.clearHighlight()
 
-        if self.pointHighlightLayer == None:
-            geomType = "multipoint" + crsString
-            self.pointHighlightLayer = QgsVectorLayer(geomType, self.tr("Highlight Point"), "memory")
-            self.pointHighlightLayer.layerDeleted.connect(self.onPointHighlightLayerDeleted)
-            QgsMapLayerRegistry.instance().addMapLayers( [self.pointHighlightLayer] )
-            sym = QgsSymbolV2.defaultSymbol( QGis.Point )
-            sym.setColor( Qt.yellow )
-            sym.setSize( 20.0 )
-            sym.setOutputUnit( QgsSymbolV2.MM )
-            sym.setAlpha( 0.5 )
-            self.pointHighlightLayer.setRendererV2( QgsSingleSymbolRendererV2( sym ) )
-            self.iface.legendInterface().moveLayer( self.pointHighlightLayer, markerGroup )
-
-        if self.lineHighlightLayer == None:
-            geomType = "multilinestring" + crsString
-            self.lineHighlightLayer = QgsVectorLayer(geomType, self.tr("Highlight Line"), "memory")
-            self.lineHighlightLayer.layerDeleted.connect(self.onLineHighlightLayerDeleted)
-            QgsMapLayerRegistry.instance().addMapLayers( [self.lineHighlightLayer] )
-            sym = QgsLineSymbolV2()
-            sym.setColor( Qt.yellow )
-            sym.setAlpha( 0.5 )
-            sym.setWidth( 2 )
-            self.lineHighlightLayer.setRendererV2( QgsSingleSymbolRendererV2( sym ) )
-            self.iface.legendInterface().moveLayer( self.lineHighlightLayer, markerGroup )
-
-        return True
-
-    def getVectorLayersByType(self,  geomType = None,  skipActive = False):
+    def getVectorLayersByType(self,  geomType):
         '''
-        Returns a dict of layers [name: id] in the project for the given
+        Returns a dict of layers [id:name] in the project for the given
         *geomType*; geomTypes are 0: point, 1: line, 2: polygon
-        If *skipActive* is True the active Layer is not included.
         '''
 
         layerList = {}
         for aLayer in self.iface.legendInterface().layers():
             if 0 == aLayer.type():   # vectorLayer
-                if  skipActive and (self.iface.mapCanvas().currentLayer().id() == aLayer.id()):
-                    continue
-                else:
-                    if geomType:
-                        if isinstance(geomType,  int):
-                            if aLayer.geometryType() == geomType and \
-                                    aLayer not in [self.pointHighlightLayer, self.lineHighlightLayer]:
-                                layerList[aLayer.id()] =  aLayer.name()
-                        else:
-                            layerList[aLayer.id()] =  aLayer.name()
+                if geomType == aLayer.geometryType():
+                    layerList[aLayer.id()] =  aLayer.name()
+
 
         return layerList
-
-    def onPointHighlightLayerDeleted(self):
-        self.pointHighlightLayer = None
-
-    def onLineHighlightLayerDeleted(self):
-        self.lineHighlightLayer = None
 
     def onLineLayerDeleted(self):
         self.lineLayer = None
@@ -246,108 +207,141 @@ class Highlighter:
 
     def run(self):
         """Run method that performs all the real work"""
-        self.initLayers()
         pointLayers = self.getVectorLayersByType(0)
-        lineLayers = self.getVectorLayersByType(1)
-        # Create the dialog (after translation)
-        dlg = HighlighterDialog(pointLayers, lineLayers)
-        # show the dialog
-        dlg.show()
-        # Run the dialog event loop
-        result = dlg.exec_()
-        # See if OK was pressed
 
-        if result == 1:
-            pointLayerId = dlg.pointLayerId
-            lineLayerId = dlg.lineLayerId
+        if len(pointLayers) >= 0:
+            lineLayers = self.getVectorLayersByType(1)
 
-            if pointLayerId == "None":
-                self.pointLayer = None
+            if self.pointLayer != None:
+                oldPointLayerId = self.pointLayer.id()
             else:
-                self.pointLayer = QgsMapLayerRegistry.instance().mapLayer(pointLayerId)
+                oldPointLayerId = None
 
-                try:
-                    self.pointLayer.selectionChanged.disconnect(self.highlightPoints)
-                except:
-                    pass
-
-                self.pointLayer.selectionChanged.connect(self.highlightPoints)
-
-                try:
-                    self.pointLayer.layerDeleted.disconnect(self.onPointLayerDeleted)
-                except:
-                    pass
-
-                self.pointLayer.layerDeleted.connect(self.onPointLayerDeleted)
-
-            if lineLayerId == "None":
-                self.lineLayer = None
+            if self.lineLayer != None:
+                oldLineLayerId = self.lineLayer.id()
             else:
-                self.lineLayer = QgsMapLayerRegistry.instance().mapLayer(lineLayerId)
+                oldLineLayerId = None
 
-                try:
-                    self.lineLayer.selectionChanged.disconnect(self.highlightLines)
-                except:
-                    pass
+            # Create the dialog (after translation)
+            dlg = HighlighterDialog(pointLayers, lineLayers, \
+                oldPointLayerId, oldLineLayerId, self.pointHighlightColor,
+                self.lineHighlightColor)
+            # show the dialog
+            dlg.show()
+            # Run the dialog event loop
+            result = dlg.exec_()
+            # See if OK was pressed
 
-                self.lineLayer.selectionChanged.connect(self.highlightLines)
+            if result == 1:
+                pointLayerId = dlg.pointLayerId
+                lineLayerId = dlg.lineLayerId
+                self.pointHighlightColor = dlg.pointColor
+                self.lineHighlightColor = dlg.lineColor
+                crsString = QSettings().value( "/Projections/projectDefaultCrs", "EPSG:4326", type=str )
+                self.crsDest = QgsCoordinateReferenceSystem(crsString)
 
-                try:
-                    self.lineLayer.layerDeleted.disconnect(self.onLineLayerDeleted)
-                except:
-                    pass
+                if pointLayerId == "None":
+                    self.pointLayer = None
+                else:
+                    if oldPointLayerId != pointLayerId:
+                        self.clearHighlight("point")
 
-                self.lineLayer.layerDeleted.connect(self.onLineLayerDeleted)
+                        if self.pointLayer != None:
+                            try:
+                                self.pointLayer.selectionChanged.disconnect(self.highlightPoints)
+                            except:
+                                pass
+                            try:
+                                self.pointLayer.layerDeleted.disconnect(self.onPointLayerDeleted)
+                            except:
+                                pass
+
+                        self.pointLayer = QgsMapLayerRegistry.instance().mapLayer(pointLayerId)
+                        self.pointLayer.selectionChanged.connect(self.highlightPoints)
+                        self.pointLayer.layerDeleted.connect(self.onPointLayerDeleted)
+
+                if lineLayerId == "None":
+                    self.lineLayer = None
+                else:
+                    if oldLineLayerId != lineLayerId:
+                        self.clearHighlight("line")
+                        self.lineLayer = QgsMapLayerRegistry.instance().mapLayer(lineLayerId)
+
+                        try:
+                            self.lineLayer.selectionChanged.disconnect(self.highlightLines)
+                        except:
+                            pass
+
+                        self.lineLayer.selectionChanged.connect(self.highlightLines)
+
+                        try:
+                            self.lineLayer.layerDeleted.disconnect(self.onLineLayerDeleted)
+                        except:
+                            pass
+
+                        self.lineLayer.layerDeleted.connect(self.onLineLayerDeleted)
 
     def highlightLines(self):
-        self.clearHighlight(self.lineHighlightLayer)
-        self.copySelected(self.lineLayer, self.lineHighlightLayer)
+        '''
+        this code is inspired by
+        http://gis.stackexchange.com/questions/174664/set-selection-color-transparent-and-border-color-red-in-qgis-using-python
+        '''
+        self.clearHighlight("line")
 
-    def highlightPoints(self):
-        self.clearHighlight(self.pointHighlightLayer)
-        self.copySelected(self.pointLayer, self.pointHighlightLayer)
+        if len(self.lineLayer.selectedFeatures()) > 0:
+            crsSrc = self.lineLayer.crs()
 
-    def clearHighlight(self, highlightLayer):
-        if self.setEditable(highlightLayer):
-            highlightLayer.removeSelection()
-            highlightLayer.invertSelection()
-            highlightLayer.deleteSelectedFeatures()
-
-    def copySelected(self, sourceLayer, highlightLayer):
-        if self.setEditable(highlightLayer):
-            crsSrc = sourceLayer.crs()
-            crsDest = highlightLayer.crs()
-
-            if crsSrc.toProj4() != crsDest.toProj4():
-                trans = QgsCoordinateTransform(crsSrc, crsDest)
+            if crsSrc.toProj4() != self.crsDest.toProj4():
+                trans = QgsCoordinateTransform(crsSrc, self.crsDest)
             else:
                 trans = None
 
-            for aFeat in sourceLayer.selectedFeatures():
+            for aFeat in self.lineLayer.selectedFeatures():
+                aGeom = QgsGeometry(aFeat.geometry())
+
+                if trans != None:
+                    aGeom.transform(trans)
+
+                h = QgsHighlight(self.iface.mapCanvas(), aGeom, self.lineLayer)
+
+                # set highlight symbol properties
+                h.setColor(self.lineHighlightColor)
+                h.setWidth(10)
+
+                # write the object to the list
+                self.lineHighlights.append(h)
+
+    def highlightPoints(self):
+        self.clearHighlight("point")
+
+        if len(self.pointLayer.selectedFeatures()) > 0:
+            crsSrc = self.pointLayer.crs()
+
+            if crsSrc.toProj4() != self.crsDest.toProj4():
+                trans = QgsCoordinateTransform(crsSrc, self.crsDest)
+            else:
+                trans = None
+
+            for aFeat in self.pointLayer.selectedFeatures():
                 aGeom = aFeat.geometry()
 
                 if trans != None:
                     aGeom = trans.transform(aGeom)
 
-                self.addFeature(highlightLayer, aGeom)
+                h = QgsHighlight(self.iface.mapCanvas(), aGeom, self.pointLayer)
 
-    def addFeature(self, highlightLayer, geom):
-        newFeature = QgsFeature()
-        provider = highlightLayer.dataProvider()
-        fields = highlightLayer.pendingFields()
-        newFeature.initAttributes(fields.count())
+                # set highlight symbol properties
+                h.setColor(self.pointHighlightColor)
+                h.setWidth(10)
 
-        for i in range(fields.count()):
-            newFeature.setAttribute(i,provider.defaultValue(i))
+                # write the object to the list
+                self.pointHighlights.append(h)
 
-        newFeature.setGeometry(geom)
-        return highlightLayer.addFeature(newFeature)
+    def clearHighlight(self, mode = "all"):
+        if mode == "all" or mode == "point":
+            for h in range(len(self.pointHighlights)):
+                self.pointHighlights.pop(0)
 
-    def setEditable(self, highlightLayer):
-        ok = highlightLayer.isEditable() # is already in editMode
-
-        if not ok:
-            # try to start editing
-            ok = highlightLayer.startEditing()
-
-        return ok
+        if mode == "all" or mode == "line":
+            for h in range(len(self.lineHighlights)):
+                self.lineHighlights.pop(0)

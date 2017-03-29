@@ -31,5 +31,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .HighlightModule import Highlighter
+    from .Highlighter import Highlighter
     return Highlighter(iface)
