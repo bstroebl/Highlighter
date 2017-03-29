@@ -242,9 +242,7 @@ class Highlighter:
                     self.pointLayer = None
                 else:
                     if oldPointLayerId != pointLayerId:
-                        self.clearHighlight("point")
-
-                        if self.pointLayer != None:
+                        if self.pointLayer != None: #remove slots from current point layer
                             try:
                                 self.pointLayer.selectionChanged.disconnect(self.highlightPoints)
                             except:
@@ -254,7 +252,9 @@ class Highlighter:
                             except:
                                 pass
 
+                        # find new point layer
                         self.pointLayer = QgsMapLayerRegistry.instance().mapLayer(pointLayerId)
+                        self.highlightPoints() # highlight if there is already a selection
                         self.pointLayer.selectionChanged.connect(self.highlightPoints)
                         self.pointLayer.layerDeleted.connect(self.onPointLayerDeleted)
 
@@ -262,27 +262,27 @@ class Highlighter:
                     self.lineLayer = None
                 else:
                     if oldLineLayerId != lineLayerId:
-                        self.clearHighlight("line")
+                        if self.lineLayer != None:
+                            try:
+                                self.lineLayer.selectionChanged.disconnect(self.highlightLines)
+                            except:
+                                pass
+
+                            try:
+                                self.lineLayer.layerDeleted.disconnect(self.onLineLayerDeleted)
+                            except:
+                                pass
+
                         self.lineLayer = QgsMapLayerRegistry.instance().mapLayer(lineLayerId)
-
-                        try:
-                            self.lineLayer.selectionChanged.disconnect(self.highlightLines)
-                        except:
-                            pass
-
+                        self.highlightLines()
                         self.lineLayer.selectionChanged.connect(self.highlightLines)
-
-                        try:
-                            self.lineLayer.layerDeleted.disconnect(self.onLineLayerDeleted)
-                        except:
-                            pass
-
                         self.lineLayer.layerDeleted.connect(self.onLineLayerDeleted)
 
     def highlightLines(self):
         '''
-        this code is inspired by
-        http://gis.stackexchange.com/questions/174664/set-selection-color-transparent-and-border-color-red-in-qgis-using-python
+        slot to be called when selection on line layer has changed
+        this code is inspired by: http://gis.stackexchange.com/questions/174664/
+        set-selection-color-transparent-and-border-color-red-in-qgis-using-python
         '''
         self.clearHighlight("line")
 
