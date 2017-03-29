@@ -237,8 +237,6 @@ class Highlighter:
                 lineLayerId = dlg.lineLayerId
                 self.pointHighlightColor = dlg.pointColor
                 self.lineHighlightColor = dlg.lineColor
-                crsString = QSettings().value( "/Projections/projectDefaultCrs", "EPSG:4326", type=str )
-                self.crsDest = QgsCoordinateReferenceSystem(crsString)
 
                 if pointLayerId == "None":
                     self.pointLayer = None
@@ -289,19 +287,8 @@ class Highlighter:
         self.clearHighlight("line")
 
         if len(self.lineLayer.selectedFeatures()) > 0:
-            crsSrc = self.lineLayer.crs()
-
-            if crsSrc.toProj4() != self.crsDest.toProj4():
-                trans = QgsCoordinateTransform(crsSrc, self.crsDest)
-            else:
-                trans = None
-
             for aFeat in self.lineLayer.selectedFeatures():
-                aGeom = QgsGeometry(aFeat.geometry())
-
-                if trans != None:
-                    aGeom.transform(trans)
-
+                aGeom = aFeat.geometry()
                 h = QgsHighlight(self.iface.mapCanvas(), aGeom, self.lineLayer)
 
                 # set highlight symbol properties
@@ -315,19 +302,8 @@ class Highlighter:
         self.clearHighlight("point")
 
         if len(self.pointLayer.selectedFeatures()) > 0:
-            crsSrc = self.pointLayer.crs()
-
-            if crsSrc.toProj4() != self.crsDest.toProj4():
-                trans = QgsCoordinateTransform(crsSrc, self.crsDest)
-            else:
-                trans = None
-
             for aFeat in self.pointLayer.selectedFeatures():
                 aGeom = aFeat.geometry()
-
-                if trans != None:
-                    aGeom = trans.transform(aGeom)
-
                 h = QgsHighlight(self.iface.mapCanvas(), aGeom, self.pointLayer)
 
                 # set highlight symbol properties
