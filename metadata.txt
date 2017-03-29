@@ -8,13 +8,13 @@
 
 [general]
 name=Highlighter
-qgisMinimumVersion=2.0
+qgisMinimumVersion=2.14
 description=Highlight selected features
 version=0.1
 author=Bernhard Ströbl/Kommunale Immobilien Jena
 email=bernhard.stroebl@jena.de
 
-about=Highlight selected features
+about=Highlight selected point or line features with a thick dot or line coloured in a user-defined colour. The layer whose features should be highlighted has to be defined in settings.
 
 tracker=https://github.com/bstroebl/Highlighter/issues
 repository=https://github.com/bstroebl/Highlighter
