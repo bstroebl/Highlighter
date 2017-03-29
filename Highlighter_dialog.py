@@ -25,7 +25,6 @@ import os
 
 from PyQt4 import QtGui, QtCore, uic
 from qgis.gui import QgsColorDialogV2
-from qgis.core import QgsMessageLog
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'Highlightdialog_base.ui'))
@@ -44,7 +43,7 @@ class HighlighterDialog(QtGui.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.pointLayerId = pointLayerId
         self.lineLayerId = lineLayerId
-        self.defaultColor = QtCore.Qt.yellow
+        self.defaultColor = QtGui.QColor.fromRgb(255, 255, 0)
 
         if pointColor == None:
             self.pointColor =  self.defaultColor
@@ -75,6 +74,14 @@ class HighlighterDialog(QtGui.QDialog, FORM_CLASS):
                     self.cbxLineLayer.setCurrentIndex(i)
                     break
 
+        self.setButtonColor(self.btnPointColor, self.pointColor)
+        self.setButtonColor(self.btnLineColor, self.lineColor)
+
+    def setButtonColor(self, button, thisColor):
+        sStylesheet = "background: " + thisColor.name() + ";"
+        button.setStyleSheet(sStylesheet)
+        button.update()
+
     def fillComboBoxFromDict(self, cbx, thisDict):
         cbx.addItem(" ", None)
 
@@ -95,10 +102,12 @@ class HighlighterDialog(QtGui.QDialog, FORM_CLASS):
     @QtCore.pyqtSlot(   )
     def on_btnPointColor_clicked(self, checked = False):
         self.pointColor = self.chooseColor(self.pointColor)
+        self.setButtonColor(self.btnPointColor, self.pointColor)
 
     @QtCore.pyqtSlot(   )
     def on_btnLineColor_clicked(self, checked = False):
         self.lineColor = self.chooseColor(self.lineColor)
+        self.setButtonColor(self.btnLineColor, self.lineColor)
 
     def accept(self):
         self.pointLayerId = self.cbxPointLayer.itemData(self.cbxPointLayer.currentIndex())
