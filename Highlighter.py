@@ -235,7 +235,7 @@ class Highlighter:
                 self.pointHighlightColor = dlg.pointColor
                 self.lineHighlightColor = dlg.lineColor
 
-                if pointLayerId == "None":
+                if pointLayerId == None:
                     self.pointLayer = None
                 else:
                     if oldPointLayerId != pointLayerId:
@@ -255,7 +255,7 @@ class Highlighter:
                         self.pointLayer.selectionChanged.connect(self.highlightPoints)
                         self.pointLayer.layerDeleted.connect(self.onPointLayerDeleted)
 
-                if lineLayerId == "None":
+                if lineLayerId == None:
                     self.lineLayer = None
                 else:
                     if oldLineLayerId != lineLayerId:
