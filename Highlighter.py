@@ -197,12 +197,37 @@ class Highlighter:
         return layerList
 
     def onLineLayerDeleted(self):
+        self.disconnectLineSlots()
         self.clearHighlight("line")
         self.lineLayer = None
 
     def onPointLayerDeleted(self):
+        self.disconnectPointSlots()
         self.clearHighlight("point")
         self.pointLayer = None
+
+    def disconnectPointSlots(self):
+        if self.pointLayer != None: #remove slots from current point layer
+            try:
+                self.pointLayer.selectionChanged.disconnect(self.highlightPoints)
+            except:
+                pass
+            try:
+                self.pointLayer.layerDeleted.disconnect(self.onPointLayerDeleted)
+            except:
+                pass
+
+    def disconnectLineSlots(self):
+        if self.lineLayer != None:
+            try:
+                self.lineLayer.selectionChanged.disconnect(self.highlightLines)
+            except:
+                pass
+
+            try:
+                self.lineLayer.layerDeleted.disconnect(self.onLineLayerDeleted)
+            except:
+                pass
 
     def run(self):
         """Run method that performs all the real work"""
@@ -241,16 +266,7 @@ class Highlighter:
                     self.onPointLayerDeleted()
                 else:
                     if oldPointLayerId != pointLayerId:
-                        if self.pointLayer != None: #remove slots from current point layer
-                            try:
-                                self.pointLayer.selectionChanged.disconnect(self.highlightPoints)
-                            except:
-                                pass
-                            try:
-                                self.pointLayer.layerDeleted.disconnect(self.onPointLayerDeleted)
-                            except:
-                                pass
-
+                        self.disconnectPointSlots()
                         # find new point layer
                         self.pointLayer = QgsMapLayerRegistry.instance().mapLayer(pointLayerId)
                         self.highlightPoints() # highlight if there is already a selection
@@ -261,17 +277,7 @@ class Highlighter:
                     self.onLineLayerDeleted()
                 else:
                     if oldLineLayerId != lineLayerId:
-                        if self.lineLayer != None:
-                            try:
-                                self.lineLayer.selectionChanged.disconnect(self.highlightLines)
-                            except:
-                                pass
-
-                            try:
-                                self.lineLayer.layerDeleted.disconnect(self.onLineLayerDeleted)
-                            except:
-                                pass
-
+                        self.disconnectLineSlots()
                         self.lineLayer = QgsMapLayerRegistry.instance().mapLayer(lineLayerId)
                         self.highlightLines()
                         self.lineLayer.selectionChanged.connect(self.highlightLines)
