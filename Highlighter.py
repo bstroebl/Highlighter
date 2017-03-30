@@ -197,9 +197,11 @@ class Highlighter:
         return layerList
 
     def onLineLayerDeleted(self):
+        self.clearHighlight("line")
         self.lineLayer = None
 
     def onPointLayerDeleted(self):
+        self.clearHighlight("point")
         self.pointLayer = None
 
     def run(self):
@@ -236,7 +238,7 @@ class Highlighter:
                 self.lineHighlightColor = dlg.lineColor
 
                 if pointLayerId == None:
-                    self.pointLayer = None
+                    self.onPointLayerDeleted()
                 else:
                     if oldPointLayerId != pointLayerId:
                         if self.pointLayer != None: #remove slots from current point layer
@@ -256,7 +258,7 @@ class Highlighter:
                         self.pointLayer.layerDeleted.connect(self.onPointLayerDeleted)
 
                 if lineLayerId == None:
-                    self.lineLayer = None
+                    self.onLineLayerDeleted()
                 else:
                     if oldLineLayerId != lineLayerId:
                         if self.lineLayer != None:
