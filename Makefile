@@ -48,7 +48,7 @@ PY_FILES = \
 
 UI_FILES = Highlightdialog_base.ui
 
-EXTRAS = metadata.txt 
+EXTRAS = metadata.txt
 
 EXTRA_DIRS =
 
@@ -67,16 +67,16 @@ PLUGIN_UPLOAD = $(c)/plugin_upload.py
 
 #RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
 
-QGISDIR=.qgis2
+QGISDIR=.qgis3
 
 default: compile
 
-compile: 
+compile:
 #$(COMPILED_RESOURCE_FILES)
 
 #%.py : %.qrc $(RESOURCES_SRC)
 #	pyrcc4 -o $*.py  $<
-	
+
 %.qm : %.ts
 	$(LRELEASE) $<
 
