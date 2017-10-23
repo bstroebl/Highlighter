@@ -21,9 +21,10 @@
  ***************************************************************************/
 """
 
+from builtins import range
 import os
 
-from PyQt4 import QtGui, QtCore, uic
+from qgis.PyQt import QtGui, QtCore, uic
 from qgis.gui import QgsColorDialogV2
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -85,7 +86,7 @@ class HighlighterDialog(QtGui.QDialog, FORM_CLASS):
     def fillComboBoxFromDict(self, cbx, thisDict):
         cbx.addItem(" ", None)
 
-        for key, value in thisDict.iteritems():
+        for key, value in thisDict.items():
             cbx.addItem( value, key )
 
     def chooseColor(self, color):

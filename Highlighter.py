@@ -20,17 +20,23 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
+
+from __future__ import absolute_import
+from builtins import range
+from builtins import object
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtGui import QIcon
+
 # Initialize Qt resources from file resources.py
 from qgis.core import *
 from qgis.gui import *
 # Import the code for the dialog
-from Highlighter_dialog import HighlighterDialog
+from .Highlighter_dialog import HighlighterDialog
 import os.path
 
 
-class Highlighter:
+class Highlighter(object):
     """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
