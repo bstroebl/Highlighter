@@ -72,7 +72,9 @@ class Highlighter(object):
         #self.toolbar = self.iface.addToolBar(u'Highlighter')
         #self.toolbar.setObjectName(u'Highlighter')
         self.pointLayer = None
+        self.pointTreeLayer = None
         self.lineLayer = None
+        self.lineTreeLayer = None
         self.pointHighlightColor = None
         self.lineHighlightColor = None
         self.lineHighlights = []
@@ -211,6 +213,18 @@ class Highlighter(object):
         self.clearHighlight("point")
         self.pointLayer = None
 
+    def onVisibilityChanged(self, thisLayerTreeNode):
+        if thisLayerTreeNode == self.pointTreeLayer:
+            if thisLayerTreeNode.isVisible():
+                self.highlightPoints()
+            else:
+                self.clearHighlight("point")
+        elif thisLayerTreeNode == self.lineTreeLayer:
+            if thisLayerTreeNode.isVisible():
+                self.highlightLines()
+            else:
+                self.clearHighlight("line")
+
     def disconnectPointSlots(self):
         if self.pointLayer != None: #remove slots from current point layer
             try:
@@ -221,6 +235,10 @@ class Highlighter(object):
                 self.pointLayer.destroyed.disconnect(self.onPointLayerDeleted)
             except:
                 pass
+            try:
+                self.pointTreeLayer.visibilityChanged.disconnect(self.onVisibilityChanged)
+            except:
+                pass
 
     def disconnectLineSlots(self):
         if self.lineLayer != None:
@@ -228,9 +246,12 @@ class Highlighter(object):
                 self.lineLayer.selectionChanged.disconnect(self.highlightLines)
             except:
                 pass
-
             try:
                 self.lineLayer.destroyed.disconnect(self.onLineLayerDeleted)
+            except:
+                pass
+            try:
+                self.lineTreeLayer.visibilityChanged.disconnect(self.onVisibilityChanged)
             except:
                 pass
 
@@ -273,26 +294,28 @@ class Highlighter(object):
                     if oldPointLayerId != pointLayerId:
                         self.disconnectPointSlots()
                         # find new point layer
-                        pointTreeLayer = QgsProject.instance().layerTreeRoot().findLayer(pointLayerId)
+                        self.pointTreeLayer = QgsProject.instance().layerTreeRoot().findLayer(pointLayerId)
 
-                        if pointTreeLayer != None:
-                            self.pointLayer = pointTreeLayer.layer()
+                        if self.pointTreeLayer != None:
+                            self.pointLayer = self.pointTreeLayer.layer()
                             self.highlightPoints() # highlight if there is already a selection
                             self.pointLayer.selectionChanged.connect(self.highlightPoints)
                             self.pointLayer.destroyed.connect(self.onPointLayerDeleted)
+                            self.pointTreeLayer.visibilityChanged.connect(self.onVisibilityChanged)
 
                 if lineLayerId == None:
                     self.onLineLayerDeleted()
                 else:
                     if oldLineLayerId != lineLayerId:
                         self.disconnectLineSlots()
-                        lineTreeLayer =  QgsProject.instance().layerTreeRoot().findLayer(lineLayerId)
+                        self.lineTreeLayer =  QgsProject.instance().layerTreeRoot().findLayer(lineLayerId)
 
-                        if lineTreeLayer != None:
-                            self.lineLayer = lineTreeLayer.layer()
+                        if self.lineTreeLayer != None:
+                            self.lineLayer = self.lineTreeLayer.layer()
                             self.highlightLines()
                             self.lineLayer.selectionChanged.connect(self.highlightLines)
                             self.lineLayer.destroyed.connect(self.onLineLayerDeleted)
+                            self.lineTreeLayer.visibilityChanged.connect(self.onVisibilityChanged)
 
     def highlightLines(self):
         '''
