@@ -25,11 +25,10 @@ from builtins import range
 import os
 
 from qgis.PyQt import QtWidgets, QtGui,  QtCore, uic
-from qgis.gui import QgsColorDialogV2
+from qgis.gui import QgsColorDialog
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'Highlightdialog_base.ui'))
-
 
 class HighlighterDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, pointLayers, lineLayers, pointLayerId = None, lineLayerId = None,
@@ -90,8 +89,8 @@ class HighlighterDialog(QtWidgets.QDialog, FORM_CLASS):
             cbx.addItem( value, key )
 
     def chooseColor(self, color):
-        clrDlg = QgsColorDialogV2(None,  color = color)
-        clrDlg.setAllowAlpha(True)
+        clrDlg = QgsColorDialog(None,  color = color)
+        clrDlg.setAllowOpacity(True)
         clrDlg.show()
         result = clrDlg.exec_()
 

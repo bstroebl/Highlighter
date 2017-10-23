@@ -194,11 +194,10 @@ class Highlighter(object):
         '''
 
         layerList = {}
-        for aLayer in self.iface.legendInterface().layers():
-            if 0 == aLayer.type():   # vectorLayer
-                if geomType == aLayer.geometryType():
-                    layerList[aLayer.id()] =  aLayer.name()
-
+        for aTreeLayer in QgsProject.instance().layerTreeRoot().findLayers():
+            if 0 == aTreeLayer.layer().type():   # vectorLayer
+                if geomType == aTreeLayer.layer().geometryType():
+                    layerList[aTreeLayer.layer().id()] =  aTreeLayer.layer().name()
 
         return layerList
 
@@ -219,7 +218,7 @@ class Highlighter(object):
             except:
                 pass
             try:
-                self.pointLayer.layerDeleted.disconnect(self.onPointLayerDeleted)
+                self.pointLayer.destroyed.disconnect(self.onPointLayerDeleted)
             except:
                 pass
 
@@ -231,7 +230,7 @@ class Highlighter(object):
                 pass
 
             try:
-                self.lineLayer.layerDeleted.disconnect(self.onLineLayerDeleted)
+                self.lineLayer.destroyed.disconnect(self.onLineLayerDeleted)
             except:
                 pass
 
@@ -274,20 +273,26 @@ class Highlighter(object):
                     if oldPointLayerId != pointLayerId:
                         self.disconnectPointSlots()
                         # find new point layer
-                        self.pointLayer = QgsMapLayerRegistry.instance().mapLayer(pointLayerId)
-                        self.highlightPoints() # highlight if there is already a selection
-                        self.pointLayer.selectionChanged.connect(self.highlightPoints)
-                        self.pointLayer.layerDeleted.connect(self.onPointLayerDeleted)
+                        pointTreeLayer = QgsProject.instance().layerTreeRoot().findLayer(pointLayerId)
+
+                        if pointTreeLayer != None:
+                            self.pointLayer = pointTreeLayer.layer()
+                            self.highlightPoints() # highlight if there is already a selection
+                            self.pointLayer.selectionChanged.connect(self.highlightPoints)
+                            self.pointLayer.destroyed.connect(self.onPointLayerDeleted)
 
                 if lineLayerId == None:
                     self.onLineLayerDeleted()
                 else:
                     if oldLineLayerId != lineLayerId:
                         self.disconnectLineSlots()
-                        self.lineLayer = QgsMapLayerRegistry.instance().mapLayer(lineLayerId)
-                        self.highlightLines()
-                        self.lineLayer.selectionChanged.connect(self.highlightLines)
-                        self.lineLayer.layerDeleted.connect(self.onLineLayerDeleted)
+                        lineTreeLayer =  QgsProject.instance().layerTreeRoot().findLayer(lineLayerId)
+
+                        if lineTreeLayer != None:
+                            self.lineLayer = lineTreeLayer.layer()
+                            self.highlightLines()
+                            self.lineLayer.selectionChanged.connect(self.highlightLines)
+                            self.lineLayer.destroyed.connect(self.onLineLayerDeleted)
 
     def highlightLines(self):
         '''
