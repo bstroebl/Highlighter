@@ -24,14 +24,14 @@
 from builtins import range
 import os
 
-from qgis.PyQt import QtGui, QtCore, uic
+from qgis.PyQt import QtWidgets, QtGui,  QtCore, uic
 from qgis.gui import QgsColorDialogV2
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'Highlightdialog_base.ui'))
 
 
-class HighlighterDialog(QtGui.QDialog, FORM_CLASS):
+class HighlighterDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, pointLayers, lineLayers, pointLayerId = None, lineLayerId = None,
         pointColor = None,  lineColor = None,  parent=None):
         """Constructor."""
